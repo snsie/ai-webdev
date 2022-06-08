@@ -6,7 +6,7 @@
   /* top: 330px; */
   /* z-index: 1000; */
   border: none;
-  /* pointer-events: none; */
+  pointer-events: none;
 }
 /* .appCanvas:focus {
   outline: none;
