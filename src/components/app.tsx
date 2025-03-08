@@ -12,7 +12,7 @@ import AppDom from './dom/app-dom';
 import useMediapipeHook from '@/hooks/use-mediapipe.hook';
 import testSupport from '@/utils/test-support';
 const App = () => {
-  testSupport([{ client: 'Chrome' }]);
+  // testSupport([{ client: 'Chrome' }]);
   // const basePosRef = useRef([1, 0, 0, 0]);
   const handRefs = useMediapipeHook();
   // const [quaternionRef, keypointsRef] = useTfjsWorkerHook();

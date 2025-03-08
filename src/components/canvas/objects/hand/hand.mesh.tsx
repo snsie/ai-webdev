@@ -19,6 +19,7 @@ import getRotMcp from '@/utils/get-rot-mcp';
 import getRotThumb from '@/utils/get-rot-thumb';
 import getBoneName from '@/utils/get-bone-name';
 import logArray from '@/utils/log-array';
+import { RigidBody } from '@react-three/rapier';
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -63,11 +64,11 @@ export default function HandMesh({
   const textRef = useRef<THREE.Mesh>(null!);
   const { scene, materials } = useGLTF(
     '/gltf/hand_model_parented_sub.glb'
-  ) as GLTFResult;
+  ) as unknown as GLTFResult;
   //@ts-ignore
   const clone = useMemo(() => SkeletonUtils.clone(scene), [scene]);
 
-  const { nodes } = useGraph(clone) as GLTFResult;
+  const { nodes } = useGraph(clone) as unknown as GLTFResult;
 
   // console.log(nodes);
   // const array1Ref = useRef('');
@@ -107,6 +108,36 @@ export default function HandMesh({
   //     console.log(bone);
   //   }
   // }, []);
+
+  // Add physics to fingertips for interaction
+  // Index finger
+  const indexFingerRef = useRef(null);
+  // Thumb
+  const thumbRef = useRef(null);
+  // Middle finger
+  const middleFingerRef = useRef(null);
+
+  // Track whether we're currently "grabbing" the box
+  const [isGrabbing, setIsGrabbing] = useState(false);
+  // Reference to the object being grabbed
+  const grabbedObjectRef = useRef(null);
+  // Distance between fingertips for pinch detection
+  const [pinchDistance, setPinchDistance] = useState(10); // Start with large value
+
+  // Track what objects each finger is touching
+  const thumbTouchingRef = useRef(null);
+  const indexTouchingRef = useRef(null);
+
+  // Pinch threshold - distance at which we consider fingers to be pinching
+  const PINCH_THRESHOLD = 0.5;
+  // Flag to prevent grab state from rapidly toggling
+  const grabCooldownRef = useRef(false);
+
+  // Store the initial hand orientation when grabbing starts
+  const grabStartOrientationRef = useRef(new THREE.Quaternion());
+  // Store the current wrist orientation for calculating rotation
+  const wristOrientationRef = useRef(new THREE.Quaternion());
+
   useFrame((state, delta) => {
     // console.log(handLabelRefs.current[handLabel]);
 
@@ -117,6 +148,12 @@ export default function HandMesh({
         0
       );
       groupRef.current.position.copy(wristPosition);
+
+      // Store the current wrist orientation
+      if (groupRef.current) {
+        wristOrientationRef.current.copy(groupRef.current.quaternion);
+      }
+
       getQuatWrist(
         'Left',
         groupRef.current,
@@ -154,6 +191,159 @@ export default function HandMesh({
         keypoints3dRef.current,
         handIndices.thumbCmc
       );
+
+      // Update physics body positions for fingertips
+      if (
+        keypoints3dRef.current &&
+        keypoints3dRef.current.length > 0 &&
+        indexFingerRef.current &&
+        thumbRef.current &&
+        middleFingerRef.current
+      ) {
+        // Index finger tip position (point 8)
+        const indexTip = new THREE.Vector3(
+          keypoints3dRef.current[8][0],
+          keypoints3dRef.current[8][1],
+          keypoints3dRef.current[8][2]
+        );
+        // Apply world matrix transformation
+        indexTip.applyMatrix4(groupRef.current.matrixWorld);
+        indexFingerRef.current.setTranslation(
+          { x: indexTip.x, y: indexTip.y, z: indexTip.z },
+          true
+        );
+
+        // Thumb tip position (point 4)
+        const thumbTip = new THREE.Vector3(
+          keypoints3dRef.current[4][0],
+          keypoints3dRef.current[4][1],
+          keypoints3dRef.current[4][2]
+        );
+        thumbTip.applyMatrix4(groupRef.current.matrixWorld);
+        thumbRef.current.setTranslation(
+          { x: thumbTip.x, y: thumbTip.y, z: thumbTip.z },
+          true
+        );
+
+        // Middle finger tip position (point 12)
+        const middleTip = new THREE.Vector3(
+          keypoints3dRef.current[12][0],
+          keypoints3dRef.current[12][1],
+          keypoints3dRef.current[12][2]
+        );
+        middleTip.applyMatrix4(groupRef.current.matrixWorld);
+        middleFingerRef.current.setTranslation(
+          { x: middleTip.x, y: middleTip.y, z: middleTip.z },
+          true
+        );
+
+        // Calculate distance between thumb and index finger for pinch detection
+        const thumbToIndexDistance = thumbTip.distanceTo(indexTip);
+        setPinchDistance(thumbToIndexDistance);
+
+        // Check if both fingers are touching the same object and are close enough
+        if (
+          !isGrabbing &&
+          !grabCooldownRef.current &&
+          thumbTouchingRef.current &&
+          indexTouchingRef.current &&
+          thumbTouchingRef.current === indexTouchingRef.current &&
+          thumbToIndexDistance < PINCH_THRESHOLD
+        ) {
+          // Start grabbing
+          setIsGrabbing(true);
+          grabbedObjectRef.current = thumbTouchingRef.current;
+
+          // Store initial hand orientation when grab starts
+          grabStartOrientationRef.current.copy(wristOrientationRef.current);
+
+          // If we have a reference to the object, attach it to the hand
+          if (grabbedObjectRef.current) {
+            // Set object to kinematic when grabbed so it follows hand movement
+            grabbedObjectRef.current.setBodyType(1); // 1 = kinematic
+
+            // Set cooldown to prevent rapid toggle
+            grabCooldownRef.current = true;
+            setTimeout(() => {
+              grabCooldownRef.current = false;
+            }, 500);
+
+            console.log('GRAB STARTED', grabbedObjectRef.current);
+          }
+        }
+
+        // Handle grabbed object
+        if (isGrabbing && grabbedObjectRef.current) {
+          // Calculate the position between thumb and index finger
+          const midPoint = new THREE.Vector3()
+            .addVectors(thumbTip, indexTip)
+            .multiplyScalar(0.5);
+
+          // Position the grabbed object at the midpoint between fingers
+          grabbedObjectRef.current.setTranslation(
+            { x: midPoint.x, y: midPoint.y, z: midPoint.z },
+            true
+          );
+
+          // Apply rotation of the hand to the grabbed object
+          if (wristOrientationRef.current) {
+            // Calculate rotation change from grab start
+            const deltaRotation = new THREE.Quaternion();
+            deltaRotation.copy(wristOrientationRef.current);
+            deltaRotation.premultiply(
+              grabStartOrientationRef.current.clone().invert()
+            );
+
+            // Apply rotation to the object
+            const currentRotation = new THREE.Quaternion();
+            const targetRotation = new THREE.Quaternion();
+            console.log(grabbedObjectRef.current.rotation);
+            // return;
+            currentRotation.copy(grabbedObjectRef.current.rotation);
+
+            // Blend current and target rotation for smoother movement
+            targetRotation.multiplyQuaternions(deltaRotation, currentRotation);
+            grabbedObjectRef.current.setRotation(targetRotation, true);
+
+            // Update grab start orientation for next frame
+            grabStartOrientationRef.current.copy(wristOrientationRef.current);
+          }
+
+          // Release when fingers move too far apart
+          if (
+            thumbToIndexDistance > PINCH_THRESHOLD * 2 &&
+            !grabCooldownRef.current
+          ) {
+            setIsGrabbing(false);
+
+            // Return object to dynamic when released
+            if (grabbedObjectRef.current) {
+              grabbedObjectRef.current.setBodyType(0); // 0 = dynamic
+
+              // Apply a small impulse on release to simulate throwing
+              const throwVelocity = new THREE.Vector3()
+                .subVectors(midPoint, wristPosition)
+                .normalize()
+                .multiplyScalar(5);
+
+              grabbedObjectRef.current.setLinvel(
+                { x: throwVelocity.x, y: throwVelocity.y, z: throwVelocity.z },
+                true
+              );
+
+              grabbedObjectRef.current = null;
+
+              // Set cooldown to prevent immediate re-grab
+              grabCooldownRef.current = true;
+              setTimeout(() => {
+                grabCooldownRef.current = false;
+              }, 500);
+
+              console.log('GRAB RELEASED');
+            }
+          }
+        }
+      }
     }
   });
   return (
@@ -165,7 +355,104 @@ export default function HandMesh({
         material={materials['Material #46']}
         skeleton={nodes.hand.skeleton}
       />
-      {/* <axesHelper ref={axesRef} args={[2]} /> */}
+
+      {/* Physics spheres for fingertips */}
+      <RigidBody
+        ref={indexFingerRef}
+        colliders="ball"
+        type="kinematicPosition"
+        position={[0, 0, 0]}
+        mass={0.1}
+        friction={0.7}
+        restitution={0.1}
+        sensor
+        onIntersectionEnter={(e) => {
+          // Store the object this finger is touching
+          if (e.other && e.other.rigidBody) {
+            indexTouchingRef.current = e.other.rigidBody;
+            console.log('Index finger touching', e.other.rigidBody);
+          }
+        }}
+        onIntersectionExit={(e) => {
+          // Clear the reference when not touching anymore
+          if (
+            e.other &&
+            e.other.rigidBody &&
+            (!isGrabbing ||
+              indexTouchingRef.current !== grabbedObjectRef.current)
+          ) {
+            if (indexTouchingRef.current === e.other.rigidBody) {
+              indexTouchingRef.current = null;
+            }
+          }
+        }}
+      >
+        <mesh visible={true}>
+          <sphereGeometry args={[0.2, 16, 16]} />
+          <meshStandardMaterial
+            color={isGrabbing ? '#00ff00' : 'blue'}
+            transparent
+            opacity={0.3}
+          />
+        </mesh>
+      </RigidBody>
+
+      <RigidBody
+        ref={thumbRef}
+        colliders="ball"
+        type="kinematicPosition"
+        position={[0, 0, 0]}
+        mass={0.1}
+        friction={0.7}
+        restitution={0.1}
+        sensor
+        onIntersectionEnter={(e) => {
+          // Store the object this finger is touching
+          if (e.other && e.other.rigidBody) {
+            thumbTouchingRef.current = e.other.rigidBody;
+            console.log('Thumb touching', e.other.rigidBody);
+          }
+        }}
+        onIntersectionExit={(e) => {
+          // Clear the reference when not touching anymore
+          if (
+            e.other &&
+            e.other.rigidBody &&
+            (!isGrabbing ||
+              thumbTouchingRef.current !== grabbedObjectRef.current)
+          ) {
+            if (thumbTouchingRef.current === e.other.rigidBody) {
+              thumbTouchingRef.current = null;
+            }
+          }
+        }}
+      >
+        <mesh visible={true}>
+          <sphereGeometry args={[0.2, 16, 16]} />
+          <meshStandardMaterial
+            color={isGrabbing ? '#00ff00' : 'green'}
+            transparent
+            opacity={0.3}
+          />
+        </mesh>
+      </RigidBody>
+
+      <RigidBody
+        ref={middleFingerRef}
+        colliders="ball"
+        type="kinematicPosition"
+        position={[0, 0, 0]}
+        mass={0.1}
+        friction={0.7}
+        restitution={0.1}
+        sensor
+        onCollisionEnter={() => console.log('Middle finger collision')}
+      >
+        <mesh visible={true}>
+          <sphereGeometry args={[0.2, 16, 16]} />
+          <meshStandardMaterial color="red" transparent opacity={0.3} />
+        </mesh>
+      </RigidBody>
     </group>
   );
 }
