@@ -41,7 +41,7 @@ export default function AppCanvas({ handRefs, ...props }) {
             handLabel="Right"
             basePosRef={basePosRightRef}
             keypoints3dRef={keypointsRightRef}
-            position={[2, 0, 0]}
+            // position={[2, 0, 0]}
           />
           {/* <HandMesh
             handLabelRefs={handLabelRefs}
