@@ -60,7 +60,7 @@ export default function useMediapipeHook() {
             video,
             videoTime * 1000
           );
-          console.log(results);
+          // console.log(results);
           if (results.landmarks && results.handedness) {
             const detectedHandLabels = { ...handLabels };
 
@@ -70,7 +70,7 @@ export default function useMediapipeHook() {
               // Flip the handedness: Left becomes Right and vice versa
               const originalHandLabel = handedness[0].categoryName;
               const handLabel = originalHandLabel === 'Left' ? 'Right' : 'Left';
-              console.log(handLabel);
+              // console.log(handLabel);
               detectedHandLabels[handLabel] = true;
 
               for (let j = 0; j < results.landmarks[i].length; j++) {
