@@ -9,8 +9,11 @@ import themeColors from '@/utils/theme-colors';
 import AppCanvas from '@/components/canvas/app-canvas';
 import AppDom from './dom/app-dom';
 // import useTfjsWorkerHook from '@/hooks/use-tfjs-worker.hook';
+import '../test';
 import useMediapipeHook from '@/hooks/use-mediapipe.hook';
-import testSupport from '@/utils/test-support';
+// import testSupport from '@/utils/test-support';
+// import MediapipeHands from '../test';
+// import MediapipeHands from '@/test';
 const App = () => {
   // testSupport([{ client: 'Chrome' }]);
   // const basePosRef = useRef([1, 0, 0, 0]);
@@ -22,7 +25,15 @@ const App = () => {
         {/* {Math.random()} */}
         {/* <ButtonAppBar taskCallback={setSelectedIndex} /> */}
         <AppDom />
+        {/* <canvas
+          className="output_canvas"
+          id="output_canvas"
+          style={{ position: 'absolute', left: '0px', top: '0px' }}
+        >
+          {/*  */}
         <AppCanvas handRefs={handRefs} />
+        {/*</canvas> */}
+        {/* <MediapipeHands /> */}
       </div>
     </ThemeProvider>
   );

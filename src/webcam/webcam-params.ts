@@ -61,7 +61,7 @@ export const fingerLookupIndices = {
 export const videoConfig = {
   audio: false,
   video: {
-    facingMode: 'user',
+    // facingMode: 'user',
     // Only setting the video to a specified size for large screen, on
     // mobile devices accept the default size.
     width: imageWidth,

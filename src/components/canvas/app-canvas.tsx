@@ -8,6 +8,7 @@ import { Environment } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
 import PhysicsBox from './objects/physics-box/physics-box.mesh';
 import PhysicsFloor from './objects/physics-floor/physics-floor.mesh';
+import HandSkeletonLines from '@/components/canvas/objects/hand/hand-skeleton-lines.mesh';
 // import HandSkeletonLines from './objects/hand/hand-skeleton-lines.mesh';
 // import HandSkeletonJoints from './objects/hand/hand-skeleton-joints.mesh';
 export default function AppCanvas({ handRefs, ...props }) {
@@ -41,16 +42,13 @@ export default function AppCanvas({ handRefs, ...props }) {
             handLabel="Right"
             basePosRef={basePosRightRef}
             keypoints3dRef={keypointsRightRef}
-            // position={[2, 0, 0]}
           />
-          {/* <HandMesh
+          <HandMesh
             handLabelRefs={handLabelRefs}
             handLabel="Left"
             basePosRef={basePosLeftRef}
             keypoints3dRef={keypointsLeftRef}
-            position={[-2, 0, 0]}
-            scale={[-1, 1, 1]}
-          /> */}
+          />
         </Suspense>
       </Physics>
 

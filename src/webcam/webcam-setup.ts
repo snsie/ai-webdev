@@ -8,7 +8,7 @@ export default async function webcamSetup() {
   }
   // const stream = await navigator.mediaDevices.getUserMedia(videoConfig);
   const video = document.getElementById('video') as HTMLVideoElement;
-  video.style.transform = 'scale(-1, 1)';
+  // video.style.transform = 'scale(-1, 1)';
   const stream = await navigator.mediaDevices.getUserMedia(videoConfig);
 
   video.srcObject = stream;

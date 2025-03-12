@@ -25,7 +25,7 @@ export default function HandSkeletonLines({ keypoints3dRef, ...props }) {
     for (let i = 0; i < fingerLookupIndices.thumb.length; i++) {}
   });
   return (
-    <group scale={14}>
+    <group scale={12} {...props}>
       <line ref={pointsRef as any}>
         <lineBasicMaterial color="blue" />
         <bufferGeometry>
