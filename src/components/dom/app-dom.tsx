@@ -5,7 +5,7 @@ import styles from '@/styles/app-dom.styles.module.css';
 export default function AppDom() {
   return (
     <div className={styles.appDom}>
-      <h4>
+      {/* <h4>
         Please watch{' '}
         <a
           href="https://www.youtube.com/watch?v=bxe2T-V8XRs&list=PLiaHhY2iBX9hdHaRr6b7XevZtgZRa1PoU&index=1&ab_channel=WelchLabs"
@@ -26,9 +26,9 @@ export default function AppDom() {
           this
         </a>{' '}
         introduction to python
-      </h4>
+      </h4> */}
       {/* <TaskTitle titleIndex={selectedIndex} /> */}
-      <h3>Show your palms to the webcam!</h3>
+      <h1>Display your palms to your webcam!</h1>
       <Suspense fallback={<WaitSpinner />}>
         <HandTask />
       </Suspense>

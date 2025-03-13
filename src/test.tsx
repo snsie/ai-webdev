@@ -43,7 +43,7 @@ const MediapipeHands: React.FC<MediapipeHandsProps> = ({ onResults }) => {
       },
       runningMode: runningMode,
       numHands: 2,
-      selfieMode: true,
+      // selfieMode: true,
     });
     setHandLandmarker(landmarker);
   };

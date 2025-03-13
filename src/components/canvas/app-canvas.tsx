@@ -104,10 +104,10 @@ export default function AppCanvas({ handRefs, ...props }) {
       </Physics>
 
       <Environment
-        background
+        // background
         preset="warehouse"
         // files="/hdr/peppermint_powerplant_2_1k.hdr"
-        backgroundBlurriness={0.7}
+        // backgroundBlurriness={0.7}
       />
       {/* <BoxAnimatedMesh position={[0, 0, -3]} /> */}
       {/* <HandSkeletonLines keypoints3dRef={keypointsRightRef} />

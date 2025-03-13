@@ -82,7 +82,7 @@ export default function useMediapipeHook() {
 
                 keypointsArray3d.push(1 - landmark.x, -landmark.y, landmark.z);
               }
-              const positionThreshold = 0.7; // Adjust this threshold as needed
+              const positionThreshold = 1; // Adjust this threshold as needed
 
               if (handLabel === 'Right') {
                 const currentBasePos = [

@@ -24,9 +24,10 @@ const App = () => {
       <div className="App">
         {/* {Math.random()} */}
         {/* <ButtonAppBar taskCallback={setSelectedIndex} /> */}
+        <AppDom />
+
         <AppCanvas handRefs={handRefs} />
 
-        <AppDom />
         {/* <canvas
           className="output_canvas"
           id="output_canvas"

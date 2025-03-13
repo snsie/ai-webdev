@@ -11,7 +11,7 @@ import {
 import * as THREE from 'three';
 import { InstancedMesh } from 'three';
 
-const BALL_COUNT = 200;
+const BALL_COUNT = 100;
 const BOUNDS = { x: 10, y: 10, z: 2 }; // Bounds for ball generation
 
 export default function PhysicsBalls() {
@@ -32,6 +32,7 @@ export default function PhysicsBalls() {
 
   //   return instances;
   // }, []);
+  const { viewport } = useThree();
   const instances = useMemo(() => {
     const instances: InstancedRigidBodyProps[] = [];
 
@@ -39,12 +40,12 @@ export default function PhysicsBalls() {
       instances.push({
         key: 'instance_' + Math.random(),
         position: [
-          Math.random() * 10 - 5,
+          Math.random() * viewport.width - viewport.width / 2,
           Math.random() * 8,
           Math.random() * 0.5,
         ],
         rotation: [Math.random(), Math.random(), Math.random()],
-        scale: Math.random() * 0.3 + 0.1, // Random sizes between 0.5 and 0.8
+        scale: Math.random() * 0.2 + 0.2, // Random sizes between 0.5 and 0.8
       });
     }
 
@@ -111,10 +112,10 @@ export default function PhysicsBalls() {
       <RigidBody type="fixed" position={[0, BOUNDS.y / 2, BOUNDS.z / 2]}>
         <CuboidCollider args={[BOUNDS.x, BOUNDS.y, 0.5]} />
       </RigidBody>
-      <RigidBody type="fixed" position={[-BOUNDS.x / 2, BOUNDS.y / 2, 0]}>
+      <RigidBody type="fixed" position={[-viewport.width / 2, BOUNDS.y / 2, 0]}>
         <CuboidCollider args={[0.5, BOUNDS.y, BOUNDS.z]} />
       </RigidBody>
-      <RigidBody type="fixed" position={[BOUNDS.x / 2, BOUNDS.y / 2, 0]}>
+      <RigidBody type="fixed" position={[viewport.width / 2, BOUNDS.y / 2, 0]}>
         <CuboidCollider args={[0.5, BOUNDS.y, BOUNDS.z]} />
       </RigidBody>
 

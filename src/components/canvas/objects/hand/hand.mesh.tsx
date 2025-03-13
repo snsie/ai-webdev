@@ -32,6 +32,7 @@ export default function HandMesh({
 }) {
   // console.log(handLabel);
   const wristPosition = new THREE.Vector3();
+  const wristRotation = new THREE.Quaternion();
   const groupRef = useRef<THREE.Group>(null!);
   const skinnedMeshRef = useRef<any>(null!);
   const clone = useMemo(
@@ -61,9 +62,12 @@ export default function HandMesh({
     // console.log(`${handLabel} wrist X position:`, wristX);
     wristPosition.set(wristX, wristY, position[2]);
     groupRef.current.position.copy(wristPosition);
-    // console.log(wristPosition);
+    wristRotation.copy(groupRef.current.quaternion);
+    // groupRef.current.rotation.copy(wristRotation);
+    // console.log(groupRef.current.rotation);
     // Update wrist physics body position
     if (wristRef.current) {
+      wristRef.current.setRotation(wristRotation, true);
       // displayedWristRef.current.position.copy(wristPosition);
       wristRef.current.setTranslation(
         {
