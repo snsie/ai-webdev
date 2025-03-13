@@ -8,7 +8,18 @@ const vec1 = new THREE.Vector3();
 const vec2 = new THREE.Vector3();
 const vecOrth = new THREE.Vector3();
 
-export default function getRotMcp(skeleton, keypointsArray, indexBot) {
+// Maximum bend percentage (0.0 to 1.0) - can be adjusted as needed
+const MAX_BEND_PERCENTAGE = 0.8; // 80% of the full possible bend
+
+export default function getRotMcp(
+  skeleton,
+  keypointsArray,
+  indexBot,
+  bendPercentage = MAX_BEND_PERCENTAGE
+) {
+  // Clamp bend percentage between 0 and 1
+  const clampedBendPercentage = Math.max(0, Math.min(1, bendPercentage));
+
   // Get the wrist quaternion and invert it
   quatWristInverted.copy(skeleton.bones[0].quaternion).invert();
 
@@ -18,19 +29,43 @@ export default function getRotMcp(skeleton, keypointsArray, indexBot) {
   let index2 = indexBot + 1; // PIP joint
 
   // Process the MCP joint (base of finger)
-  processFinger(skeleton, keypointsArray, index0, index1, index2, 0.8);
+  processFinger(
+    skeleton,
+    keypointsArray,
+    index0,
+    index1,
+    index2,
+    0.8,
+    clampedBendPercentage
+  );
 
   // Process the PIP joint (middle joint)
   index0 = indexBot;
   index1 = indexBot + 1;
   index2 = indexBot + 2;
-  processFinger(skeleton, keypointsArray, index0, index1, index2, 0.9);
+  processFinger(
+    skeleton,
+    keypointsArray,
+    index0,
+    index1,
+    index2,
+    0.9,
+    clampedBendPercentage
+  );
 
   // Process the DIP joint (tip joint)
   index0 = indexBot + 1;
   index1 = indexBot + 2;
   index2 = indexBot + 3;
-  processFinger(skeleton, keypointsArray, index0, index1, index2, 0.9);
+  processFinger(
+    skeleton,
+    keypointsArray,
+    index0,
+    index1,
+    index2,
+    0.9,
+    clampedBendPercentage
+  );
 }
 
 // Helper function to process a finger joint
@@ -40,7 +75,8 @@ function processFinger(
   index0,
   index1,
   index2,
-  lerpFactor
+  lerpFactor,
+  bendPercentage
 ) {
   // Skip if any keypoint is missing
   if (
@@ -80,7 +116,9 @@ function processFinger(
 
   // Apply rotation based on the angle between segments
   // The rotation is primarily around the X axis for finger bending
-  const targetRotation = Math.min(Math.PI * 0.9, angle);
+  // Apply the bend percentage to limit how far fingers can bend
+  const maxBendAngle = Math.PI * 0.9 * bendPercentage;
+  const targetRotation = Math.min(maxBendAngle, angle);
 
   // Apply rotation with smoothing
   bone.rotation.x = THREE.MathUtils.lerp(
@@ -92,7 +130,7 @@ function processFinger(
   // Add a small amount of side-to-side rotation based on the cross product
   if (index1 === 5 || index1 === 9 || index1 === 13 || index1 === 17) {
     // Only apply to MCP joints (base of fingers)
-    const sideRotation = vecOrth.y * 0.3;
+    const sideRotation = vecOrth.y * 0.3 * bendPercentage;
     bone.rotation.y = THREE.MathUtils.lerp(bone.rotation.y, sideRotation, 0.5);
   }
 }

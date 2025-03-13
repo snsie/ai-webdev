@@ -24,6 +24,8 @@ const App = () => {
       <div className="App">
         {/* {Math.random()} */}
         {/* <ButtonAppBar taskCallback={setSelectedIndex} /> */}
+        <AppCanvas handRefs={handRefs} />
+
         <AppDom />
         {/* <canvas
           className="output_canvas"
@@ -31,7 +33,6 @@ const App = () => {
           style={{ position: 'absolute', left: '0px', top: '0px' }}
         >
           {/*  */}
-        <AppCanvas handRefs={handRefs} />
         {/*</canvas> */}
         {/* <MediapipeHands /> */}
       </div>

@@ -86,7 +86,7 @@ export default function HandMesh({
       handIndices.thumbCmc
     );
   });
-
+  console.log('test');
   return (
     <group ref={groupRef} dispose={null} {...props}>
       <primitive object={nodes.bone000} />

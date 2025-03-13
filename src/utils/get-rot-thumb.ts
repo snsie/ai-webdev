@@ -13,7 +13,7 @@ export default function getRotThumb(skeleton, keypointsArray, indexBot) {
   quatWristInverted.copy(skeleton.bones[0].quaternion).invert();
 
   // Process the CMC joint (base of thumb)
-  processThumbJoint(skeleton, keypointsArray, 0, indexBot, indexBot + 1, 0.8);
+  processThumbJoint(skeleton, keypointsArray, 0, indexBot + 1, indexBot, 0.8);
 
   // Process the MCP joint (middle joint of thumb)
   processThumbJoint(
@@ -82,12 +82,12 @@ function processThumbJoint(
   if (!bone) return;
 
   // For the CMC joint (base of thumb), we need special handling
-  console.log(index1);
+  // console.log(index1);
   const indexBot = 1;
   if (index1 === indexBot) {
     // CMC joint needs rotation around multiple axes
-    const indexBase = 5; // Index finger MCP joint
-    const thumbTip = 4; // Thumb tip
+    const indexBase = indexBot + 2; // Index finger MCP joint
+    const thumbTip = indexBot + 1; // Thumb tip
 
     // Calculate vector from thumb CMC to index MCP for opposition
     const oppositionVec = new THREE.Vector3(

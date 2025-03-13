@@ -17,12 +17,14 @@ const createHandLandmarker = async () => {
     runningMode: 'VIDEO',
     numHands: 2,
   });
+
   return handLandmarker;
 };
 const handLabels = { Left: false, Right: false };
 export default function useMediapipeHook() {
   const basePosRightRef = useRef([0, 0, 0]);
   const basePosLeftRef = useRef([0, 0, 0]);
+  const basePosRef = useRef([0, 0, 0]);
   const keypointsRightRef = useRef(new Float32Array(numKeypoints3d));
   const keypointsLeftRef = useRef(new Float32Array(numKeypoints3d));
   const handLabelRefs = useRef(handLabels);
@@ -60,9 +62,10 @@ export default function useMediapipeHook() {
             video,
             videoTime * 1000
           );
-          // console.log(results);
+
           if (results.landmarks && results.handedness) {
             const detectedHandLabels = { ...handLabels };
+            // console.log(detectedHandLabels);
 
             for (let i = 0; i < results.landmarks.length; i++) {
               const keypointsArray3d: number[] = [];
@@ -70,14 +73,16 @@ export default function useMediapipeHook() {
               // Flip the handedness: Left becomes Right and vice versa
               const originalHandLabel = handedness[0].categoryName;
               const handLabel = originalHandLabel === 'Left' ? 'Right' : 'Left';
-              // console.log(handLabel);
               detectedHandLabels[handLabel] = true;
 
               for (let j = 0; j < results.landmarks[i].length; j++) {
                 const landmark = results.landmarks[i][j];
+                // const worldLandmark = results.worldLandmarks[i][j];
                 // Invert the x-axis by using 1-landmark.x instead of landmark.x
+
                 keypointsArray3d.push(1 - landmark.x, -landmark.y, landmark.z);
               }
+              const positionThreshold = 0.7; // Adjust this threshold as needed
 
               if (handLabel === 'Right') {
                 const currentBasePos = [
@@ -86,30 +91,51 @@ export default function useMediapipeHook() {
                   -results.landmarks[i][globalPosJoint].z,
                 ];
 
-                basePosRightRef.current.forEach(
-                  (val, index) =>
-                    (basePosRightRef.current[index] =
-                      currentBasePos[index] * updateGamma +
-                      val * (1 - updateGamma))
+                // Check if the change in position exceeds the threshold
+                const isPositionChangeValid = currentBasePos.every(
+                  (pos, idx) =>
+                    Math.abs(pos - basePosRightRef.current[idx]) <
+                    positionThreshold
                 );
+
+                // Only update if the change is within threshold
+                if (isPositionChangeValid) {
+                  basePosRightRef.current.forEach(
+                    (val, index) =>
+                      (basePosRightRef.current[index] =
+                        currentBasePos[index] * updateGamma +
+                        val * (1 - updateGamma))
+                  );
+                }
                 keypointsRightRef.current.forEach(
                   (val, index) =>
                     (keypointsRightRef.current[index] =
                       keypointsArray3d[index] * updateGamma +
                       val * (1 - updateGamma))
                 );
-              } else {
+              } else if (handLabel === 'Left') {
                 const currentBasePos = [
                   0.5 - results.landmarks[i][globalPosJoint].x, // Invert x-axis for base position
                   0.6 - results.landmarks[i][globalPosJoint].y,
                   -results.landmarks[i][globalPosJoint].z,
                 ];
-                basePosLeftRef.current.forEach(
-                  (val, index) =>
-                    (basePosLeftRef.current[index] =
-                      currentBasePos[index] * updateGamma +
-                      val * (1 - updateGamma))
+
+                // Check if the change in position exceeds the threshold
+                const isPositionChangeValid = currentBasePos.every(
+                  (pos, idx) =>
+                    Math.abs(pos - basePosLeftRef.current[idx]) <
+                    positionThreshold
                 );
+
+                // Only update if the change is within threshold
+                if (isPositionChangeValid) {
+                  basePosLeftRef.current.forEach(
+                    (val, index) =>
+                      (basePosLeftRef.current[index] =
+                        currentBasePos[index] * updateGamma +
+                        val * (1 - updateGamma))
+                  );
+                }
                 keypointsLeftRef.current.forEach(
                   (val, index) =>
                     (keypointsLeftRef.current[index] =
